@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌱 Kind Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+
+</head>
+
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div id="loginScreen" class="ov">
+  <div class="modal" style="max-width:24rem">
+    <div class="lhero"><span class="lleaf">🌱</span>
+      <h2 style="margin-top:.4rem">Kind Planner</h2>
+      <p style="color:var(--ink-f);font-size:.87rem;margin-top:.2rem">A gentle AI-powered guide for your time</p>
+    </div>
+    <div class="fg"><label id="passLbl">Your password</label>
+      <input type="password" id="loginPass" placeholder="Enter password" autocomplete="current-password"></div>
+    <button class="btn bp bfull" onclick="doLogin()">Continue →</button>
+    <button class="btn bg bfull" onclick="openReset()" style="margin-top:.2rem">Forgot password?</button>
+    <div id="loginMsg" style="min-height:1rem;text-align:center;font-size:.82rem;color:var(--rose);margin-top:.35rem"></div>
+  </div>
+</div>
+
+<!-- ══ RESET ══ -->
+<div id="resetDlg" class="ov h">
+  <div class="modal" style="max-width:21rem">
+    <h2>Reset everything?</h2>
+    <p class="sub">Deletes all tasks, schedule and streak. Type <strong>RESET</strong> to confirm.</p>
+    <input id="resetIn" type="text" placeholder='Type "RESET"'>
+    <div class="row" style="margin-top:.9rem">
+      <button class="btn br" onclick="doReset()">Delete Everything</button>
+      <button class="btn bg" onclick="closeDlg('resetDlg')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCHEDULE SETUP ══ -->
+<div id="schedDlg" class="ov h">
+  <div class="modal" style="max-width:35rem">
+    <h2>Your Weekly Rhythm 🗓</h2>
+    <p class="sub">Tell me your typical sleep, school/work and free time — so Sage can suggest the kindest start times.</p>
+    <div id="schedDays" style="max-height:52vh;overflow-y:auto;padding-right:.2rem"></div>
+    <div class="row" style="margin-top:1.1rem">
+      <button class="btn bp" onclick="saveSchedule()">Save Schedule</button>
+      <button class="btn bg" onclick="skipSchedule()">Skip for now</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADD TASK ══ -->
+<div id="taskDlg" class="ov h">
+  <div class="modal" style="max-width:25rem">
+    <h2>Add a Task ✏️</h2>
+    <div class="fg"><label>What needs doing?</label><input id="tName" placeholder="e.g. Write essay introduction"></div>
+    <div class="fg"><label>How heavy does it feel?</label>
+      <select id="tLevel">
+        <option value="easy">🌿 Light — quick and easy</option>
+        <option value="medium" selected>⚡ Medium — needs focus</option>
+        <option value="hard">🔥 Heavy — drains energy</option>
+      </select></div>
+    <div class="fg"><label>Estimated time</label>
+      <select id="tDur">
+        <option value="0.5">30 minutes</option>
+        <option value="1" selected>1 hour</option>
+        <option value="1.5">1.5 hours</option>
+        <option value="2">2 hours</option>
+        <option value="3">3 hours</option>
+      </select></div>
+    <div class="fg"><label>Deadline (optional)</label><input id="tDate" type="date"></div>
+    <div class="row">
+      <button class="btn bp" onclick="addTask()">Add Task</button>
+      <button class="btn bg" onclick="closeDlg('taskDlg')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SETTINGS ══ -->
+<div id="settingsDlg" class="ov h">
+  <div class="modal">
+    <h2>Settings ⚙️</h2>
+    <div class="fg"><label>Your name</label><input id="sName" placeholder="What should I call you?"></div>
+    <div class="fg"><label>New password (leave blank to keep current)</label><input id="sPass" type="password" placeholder="4+ characters"></div>
+    <div class="dvd"></div>
+    <!-- API Key Setup -->
+    <div style="margin-bottom:.8rem">
+      <label style="margin-bottom:.4rem">🔑 Claude API Key (for live AI)</label>
+      <input type="password" id="sApiKey" placeholder="sk-ant-api03-..." autocomplete="off" style="font-family:monospace;font-size:.8rem">
+      <p style="font-size:.74rem;color:var(--ink-f);margin-top:.3rem">Your key is stored locally only. Get one free at <a href="https://console.anthropic.com" target="_blank" style="color:var(--sage)">console.anthropic.com</a></p>
+    </div>
+    <div class="dvd"></div>
+    <div class="tgl-row"><span class="tgl-lbl">🌙 Dark mode</span><button class="tgl" id="thTgl" onclick="toggleTheme()"></button></div>
+    <div class="dvd"></div>
+    <div class="row">
+      <button class="btn bp" onclick="saveSettings()">Save</button>
+      <button class="btn bg" onclick="exportData()">📤 Export</button>
+      <button class="btn br" onclick="clearAll()">Delete All</button>
+    </div>
+    <button class="btn bg bfull" style="margin-top:.4rem" onclick="closeDlg('settingsDlg')">Close</button>
+  </div>
+</div>
+
+<!-- ══ BRAIN DUMP MODAL ══ -->
+<div id="brainDlg" class="ov h">
+  <div class="modal" style="max-width:28rem">
+    <h2>🧠 Brain Dump</h2>
+    <p class="sub">Just dump everything on your mind. Sage will sort it into tasks for you automatically.</p>
+    <textarea class="bdump-area" id="brainTxt" rows="6" placeholder="Write anything — 'finish the report, buy milk, call dentist, prepare slides for monday, clean room...'"></textarea>
+    <div class="row" style="margin-top:1rem">
+      <button class="btn bp" onclick="processBrainDump()">🤖 Let Sage Sort This</button>
+      <button class="btn bg" onclick="closeDlg('brainDlg')">Cancel</button>
+    </div>
+    <div id="brainResult" style="margin-top:.8rem"></div>
+  </div>
+</div>
+
+<!-- ══ CELEBRATION MODAL ══ -->
+<div id="celDlg" class="ov h">
+  <div class="modal" style="max-width:22rem">
+    <div class="cel-modal">
+      <span class="cel-emoji" id="celEmoji">🎉</span>
+      <h2 id="celTitle">Amazing!</h2>
+      <p id="celMsg" class="sub" style="margin-bottom:1.2rem"></p>
+      <button class="btn bp" onclick="closeDlg('celDlg')">Keep Going! →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ NAV ══ -->
+<nav class="nav">
+  <button class="nb on"  onclick="go(0)">🏠 Home</button>
+  <button class="nb"     onclick="go(1)">⏳ Pending</button>
+  <button class="nb"     onclick="go(2)">📚 Today</button>
+  <button class="nb"     onclick="go(3)">✅ Tasks</button>
+  <button class="nb"     onclick="go(4)">🤖 Sage AI</button>
+  <button class="nb"     onclick="go(5)">💚 Wellbeing</button>
+  <button class="nb"     onclick="go(6)">⏱ Focus</button>
+  <button class="nb"     onclick="go(7)">🗓 Plan</button>
+  <button class="nb"     onclick="openSettings()">⚙️</button>
+</nav>
+
+<!-- ══════════════════════════════════
+     PAGE 0 — HOME
+══════════════════════════════════ -->
+<div id="page0" class="pg on">
+
+  <!-- API Key Banner -->
+  <div class="key-banner" id="keyBanner" style="display:none">
+    <span class="kb-icon">🔑</span>
+    <div class="kb-txt">
+      <strong>Connect Claude AI for live coaching!</strong><br>
+      Add your free API key to unlock personalized advice from Sage.
+    </div>
+    <div style="display:flex;gap:.4rem;flex:1;min-width:180px">
+      <input class="key-inp" type="password" id="quickKeyIn" placeholder="sk-ant-api03-..." autocomplete="off" style="font-family:monospace">
+      <button class="btn bp bsm" onclick="saveQuickKey()">Save</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="lbl" id="homeDateLbl"></p>
+    <h1 style="margin-top:.3rem">Hello, <span id="homeName">friend</span> 🌱</h1>
+    <p class="sub" id="homeGreet">Take a breath. Let's plan kindly today.</p>
+
+    <!-- XP / Level -->
+    <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:.8rem">
+      <span class="level-badge" id="levelBadge">🌱 Seedling</span>
+      <div style="flex:1">
+        <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--ink-f);margin-bottom:2px">
+          <span>Level Progress</span><span id="xpTxt">0 XP</span>
+        </div>
+        <div class="xp-bar-wrap"><div class="xp-bar" id="xpBar" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><span class="stn" id="sPending">0</span><div class="stl">Pending</div></div>
+      <div class="stat"><span class="stn" id="sStreak">0</span><div class="stl">Streak 🔥</div></div>
+      <div class="stat"><span class="stn" id="sDone">0</span><div class="stl">Done Today</div></div>
+    </div>
+  </div>
+
+  <!-- AI Daily Feedback -->
+  <div class="card al-sage">
+    <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.7rem">
+      <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--sage),var(--amber));display:flex;align-items:center;justify-content:center;font-size:1rem;animation:float 3s ease-in-out infinite;flex-shrink:0" class="ai-glow">🌱</div>
+      <div><div style="font-weight:600;font-size:.89rem">Sage's Daily Note</div>
+        <div style="font-size:.72rem;color:var(--sage);font-weight:500" id="aiStatusDot">● Live Claude AI</div></div>
+      <button class="btn bg bxs" onclick="loadDailyFeedback()" style="margin-left:auto">↺ Refresh</button>
+    </div>
+    <div id="aiFeedTxt" class="ai-txt">
+      <div class="shimmer" style="height:.85rem;margin-bottom:.42rem;width:88%"></div>
+      <div class="shimmer" style="height:.85rem;margin-bottom:.42rem;width:73%"></div>
+      <div class="shimmer" style="height:.85rem;width:58%"></div>
+    </div>
+  </div>
+
+  <!-- Future Impact -->
+  <div class="card al-amber">
+    <h3>📊 Future Impact</h3>
+    <p class="sub">How your tasks ripple through the week</p>
+    <div id="impactBars"></div>
+    <p id="impactMsg" style="font-size:.84rem;color:var(--ink-s);margin-top:.8rem;line-height:1.6"></p>
+  </div>
+
+  <!-- Weekly energy chart -->
+  <div class="card">
+    <h3>📈 This Week's Energy</h3>
+    <div class="wk-chart" id="weekChart"></div>
+    <div style="display:flex;justify-content:space-between;margin-top:.45rem">
+      <span class="wk-dl">Mon</span><span class="wk-dl">Sun</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Quick Actions</h3>
+    <div class="row">
+      <button class="btn bp" onclick="openDlg('taskDlg')">➕ Add Task</button>
+      <button class="btn ba" onclick="openDlg('brainDlg')">🧠 Brain Dump</button>
+      <button class="btn bl" onclick="go(4)">🤖 Ask Sage</button>
+      <button class="btn bg" onclick="go(6)">⏱ Focus Timer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE 1 — PENDING
+══════════════════════════════════ -->
+<div id="page1" class="pg">
+  <div class="card al-rose">
+    <div style="display:flex;align-items:center;gap:1.2rem">
+      <div class="arc-wrap">
+        <svg viewBox="0 0 88 88" width="88" height="88">
+          <circle cx="44" cy="44" r="36" fill="none" stroke="var(--w2)" stroke-width="7"/>
+          <circle id="arcFill" cx="44" cy="44" r="36" fill="none" stroke="var(--sage)" stroke-width="7"
+            stroke-linecap="round" stroke-dasharray="226.2" stroke-dashoffset="226.2"
+            style="transition:stroke-dashoffset 1s cubic-bezier(.34,1.2,.64,1);transform:rotate(-90deg);transform-origin:center"/>
+        </svg>
+        <div class="arc-label">
+          <span class="arc-num" id="arcNum">0%</span>
+          <span class="arc-sub">done</span>
+        </div>
+      </div>
+      <div style="flex:1">
+        <h2 style="margin-bottom:.3rem">Pending Tasks</h2>
+        <div style="font-size:.85rem;color:var(--ink-s);line-height:1.6">
+          <span id="pndPendingCount" style="font-weight:600;color:var(--rose);font-family:var(--fd);font-size:1.1rem">0</span> pending &nbsp;·&nbsp;
+          <span id="pndDoneCount" style="font-weight:600;color:var(--sage);font-family:var(--fd);font-size:1.1rem">0</span> done &nbsp;·&nbsp;
+          <span id="pndOverdueCount" style="font-weight:600;color:var(--amber);font-family:var(--fd);font-size:1.1rem">0</span> overdue
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="overdueBanner" style="display:none">
+    <div class="overdue-banner">
+      <span class="ob-icon">⚠️</span>
+      <div class="ob-text" id="overdueText"></div>
+    </div>
+  </div>
+
+  <div id="upcomingBanner" style="display:none">
+    <div class="upcoming-banner" id="upcomingText"></div>
+  </div>
+
+  <!-- AI Pending Advice -->
+  <div class="card al-sage" id="pndAICard">
+    <div style="display:flex;align-items:center;gap:.55rem;margin-bottom:.65rem">
+      <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--sage),var(--amber));display:flex;align-items:center;justify-content:center;font-size:.85rem;animation:float 3s ease-in-out infinite">🌱</div>
+      <strong style="font-size:.88rem">Sage's advice on your pending tasks</strong>
+      <button class="btn bg bxs" onclick="loadPendingAdvice()" style="margin-left:auto">↺</button>
+    </div>
+    <div id="pndAITxt" class="ai-txt">
+      <div class="shimmer" style="height:.85rem;margin-bottom:.4rem;width:82%"></div>
+      <div class="shimmer" style="height:.85rem;width:64%"></div>
+    </div>
+  </div>
+
+  <!-- Priority Matrix -->
+  <div class="card">
+    <h3>🎯 Priority Matrix</h3>
+    <p class="sub" style="margin-bottom:.5rem">Your tasks mapped by urgency and effort</p>
+    <div class="matrix-wrap" style="position:relative;padding-left:38px">
+      <div class="matrix-y">⬆ Urgent</div>
+      <div class="matrix-x"><span>← Easy</span><span>Hard →</span></div>
+      <div class="matrix" id="priorityMatrix">
+        <div class="mq q1"><span class="mq-lbl">🔴 Do First</span><div id="mq1"></div></div>
+        <div class="mq q2"><span class="mq-lbl">⚡ Schedule</span><div id="mq2"></div></div>
+        <div class="mq q3"><span class="mq-lbl">🌿 Delegate</span><div id="mq3"></div></div>
+        <div class="mq q4"><span class="mq-lbl">💜 Maybe Later</span><div id="mq4"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter + Sort -->
+  <div class="card" style="padding:1.1rem 1.5rem">
+    <div class="filter-bar" id="filterBar">
+      <button class="fb-pill act" onclick="setFilter('all',this)">All</button>
+      <button class="fb-pill" onclick="setFilter('overdue',this)">🔴 Overdue</button>
+      <button class="fb-pill" onclick="setFilter('today',this)">📅 Due Soon</button>
+      <button class="fb-pill" onclick="setFilter('easy',this)">🌿 Light</button>
+      <button class="fb-pill" onclick="setFilter('medium',this)">⚡ Medium</button>
+      <button class="fb-pill" onclick="setFilter('hard',this)">🔥 Heavy</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+      <span class="lbl">Sort by:</span>
+      <select class="sort-sel" id="sortSel" onchange="renderPending()">
+        <option value="deadline">Deadline</option>
+        <option value="level">Difficulty</option>
+        <option value="duration">Duration</option>
+        <option value="added">Recently added</option>
+      </select>
+      <button class="btn bp bsm" onclick="openDlg('taskDlg')" style="margin-left:auto">➕ Add Task</button>
+      <button class="btn bg bsm" onclick="rescheduleAll()">🌿 Reschedule +2d</button>
+    </div>
+  </div>
+
+  <!-- Pending List -->
+  <div class="card">
+    <div class="pnd-hdr">
+      <div class="pnd-count">Showing <span id="pndShowCount">0</span> tasks</div>
+      <div class="row" style="margin:0;gap:.35rem">
+        <button class="btn bg bxs" onclick="splitHeavy()">✂️ Split Heavy</button>
+        <button class="btn br bxs" onclick="clearDone()">🗑 Clear Done</button>
+      </div>
+    </div>
+    <div id="pendingList"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE 2 — TODAY
+══════════════════════════════════ -->
+<div id="page2" class="pg">
+  <div class="card">
+    <h1>Today's Plan 📚</h1>
+    <p class="sub" id="todayDateLbl"></p>
+    <div class="row">
+      <button class="btn bp bsm" onclick="aiPrioritise()">🤖 AI Prioritise</button>
+      <button class="btn bg bsm" onclick="rescheduleAll()">🌿 Reschedule +2d</button>
+      <button class="btn bg bsm" onclick="openDlg('taskDlg')">➕ Add</button>
+    </div>
+    <div id="todayList"></div>
+  </div>
+  <div class="card al-sage" id="kindNoteCard" style="display:none">
+    <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.55rem">
+      <span style="font-size:1.05rem">💬</span>
+      <strong style="font-size:.9rem">A kind note from Sage</strong>
+    </div>
+    <div id="kindNoteTxt" class="ai-txt"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE 3 — ALL TASKS
+══════════════════════════════════ -->
+<div id="page3" class="pg">
+  <div class="card">
+    <h1>All Tasks ✅</h1>
+    <div class="row">
+      <button class="btn bp bsm" onclick="openDlg('taskDlg')">➕ Add</button>
+      <button class="btn bg bsm" onclick="openDlg('brainDlg')">🧠 Brain Dump</button>
+      <button class="btn bg bsm" onclick="splitHeavy()">✂️ Split Heavy</button>
+      <button class="btn bg bsm" onclick="clearDone()">🗑 Clear Done</button>
+      <button class="btn ba bsm" onclick="aiAnalyseTasks()">🤖 AI Review</button>
+    </div>
+    <div id="taskList"></div>
+  </div>
+  <div class="card al-amber" id="aiRevCard" style="display:none">
+    <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.55rem">
+      <span>🤖</span><strong>Sage's Task Review</strong>
+    </div>
+    <div id="aiRevTxt" class="ai-txt"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE 4 — SAGE AI
+══════════════════════════════════ -->
+<div id="page4" class="pg">
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:.95rem;margin-bottom:1.15rem">
+      <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--sage),var(--amber));display:flex;align-items:center;justify-content:center;font-size:1.45rem;animation:float 3s ease-in-out infinite;flex-shrink:0" class="ai-glow">🌱</div>
+      <div>
+        <div style="font-family:var(--fd);font-size:1rem;font-weight:600">Sage, your Kind Coach</div>
+        <div style="font-size:.76rem;color:var(--sage);font-weight:500" id="chatStatusDot">● Claude AI · knows your full context</div>
+      </div>
+    </div>
+    <p class="sub">I know your schedule, tasks, energy and streak. Ask me anything.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1.1rem">
+      <button class="qp" onclick="qa('How am I doing overall? Be honest but kind.')">How am I doing?</button>
+      <button class="qp" onclick="qa('What should I focus on today?')">Today\'s focus</button>
+      <button class="qp" onclick="qa('I didn\'t finish tasks yesterday. What now?')">Missed tasks</button>
+      <button class="qp" onclick="qa('I feel tired. Should I work or rest?')">Tired & unsure</button>
+      <button class="qp" onclick="qa('Analyse my week load. Will it be stressful?')">Week load</button>
+      <button class="qp" onclick="qa('Give me a realistic plan for today.')">Plan my day</button>
+      <button class="qp" onclick="qa('Am I on track for my deadlines?')">On track?</button>
+      <button class="qp" onclick="qa('What task should I start RIGHT NOW and why?')">Start now!</button>
+    </div>
+    <div class="bw" id="chatMsgs"></div>
+    <div class="ci-row">
+      <textarea id="chatIn" placeholder="Ask Sage anything…" rows="2" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"></textarea>
+      <button class="btn bp" onclick="sendMsg()" style="height:42px;white-space:nowrap;flex-shrink:0">Send →</button>
+    </div>
+  </div>
+
+  <!-- Weekly Review -->
+  <div class="card al-lav">
+    <h3>📋 Weekly Review</h3>
+    <p class="sub">Honest AI feedback on your whole week — wins, gaps, and what to adjust.</p>
+    <button class="btn bl" onclick="weeklyReview()">Generate My Weekly Review</button>
+    <div id="wkRevTxt" style="margin-top:.7rem"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE 5 — WELLBEING
+══════════════════════════════════ -->
+<div id="page5" class="pg">
+  <div class="card">
+    <h1>Wellbeing 💚</h1>
+    <p class="sub">How you're actually feeling shapes everything.</p>
+    <h3 style="margin-bottom:.45rem">Today's Energy</h3>
+    <div class="mood-row">
+      <button class="mb" onclick="setMood('low')" id="m-low">😴<span>Exhausted</span></button>
+      <button class="mb" onclick="setMood('medium')" id="m-medium">⚡<span>Okay</span></button>
+      <button class="mb" onclick="setMood('high')" id="m-high">🔥<span>Energised</span></button>
+    </div>
+    <div class="fg" style="margin-top:.9rem">
+      <label>How are you feeling? (optional)</label>
+      <textarea id="wbNote" rows="2" placeholder="Anything on your mind? It's safe to write here…"></textarea>
+    </div>
+    <button class="btn bp" onclick="logWellbeing()">Log Check-in  +1 streak</button>
+    <div class="stats" style="margin-top:1.4rem">
+      <div class="stat"><span class="stn" id="wStr">0</span><div class="stl">Streak</div></div>
+      <div class="stat"><span class="stn" id="wLogs">0</span><div class="stl">Check-ins</div></div>
+      <div class="stat"><span class="stn" id="wAvg">—</span><div class="stl">Avg Energy</div></div>
+    </div>
+  </div>
+
+  <!-- Breathe Widget -->
+  <div class="card" style="text-align:center">
+    <h3>🌬️ Quick Breathe</h3>
+    <p class="sub">Tap to start a 4-7-8 breathing cycle</p>
+    <div class="breathe-circle" id="breatheCircle" onclick="startBreathe()">Tap to start</div>
+    <p id="breatheLabel" style="color:var(--ink-f);font-size:.82rem;margin-top:.4rem"></p>
+  </div>
+
+  <!-- AI Wellbeing Feedback -->
+  <div class="card al-sage">
+    <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.7rem">
+      <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--sage),var(--amber));display:flex;align-items:center;justify-content:center;font-size:.85rem">🌱</div>
+      <strong style="font-size:.9rem">Sage's Wellbeing Note</strong>
+      <button class="btn bg bxs" onclick="loadWbNote()" style="margin-left:auto">↺ Refresh</button>
+    </div>
+    <div id="wbFeedTxt" class="ai-txt">Log your energy to get a personal note from Sage.</div>
+  </div>
+
+  <!-- Habit -->
+  <div class="card">
+    <h3>🌿 Daily Habit to Protect</h3>
+    <p class="sub">One small thing that keeps you grounded.</p>
+    <input id="habitIn" placeholder="e.g. 10 min walk, read before bed">
+    <button class="btn bg bsm" onclick="saveHabit()">Save habit</button>
+  </div>
+
+  <!-- Insights -->
+  <div class="card">
+    <h3>💡 Wellbeing Insights</h3>
+    <div id="wbInsights"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE 6 — FOCUS TIMER
+══════════════════════════════════ -->
+<div id="page6" class="pg">
+  <div class="card" style="text-align:center">
+    <h1>Focus Timer ⏱</h1>
+    <p class="sub">Gentle Pomodoro — work in kind, focused bursts.</p>
+    <div class="t-ring" id="tRing" onclick="toggleTimer()">
+      <div class="t-in">
+        <span class="t-num" id="tNum">25:00</span>
+        <span class="t-lbl" id="tLbl">Tap to start</span>
+      </div>
+    </div>
+    <div class="row" style="justify-content:center;margin-bottom:1.15rem">
+      <button class="btn bp bsm" onclick="setMode('work')">🎯 Focus 25m</button>
+      <button class="btn ba bsm" onclick="setMode('break')">☕ Break 5m</button>
+      <button class="btn bg bsm" onclick="setMode('long')">🌙 Long Break 15m</button>
+      <button class="btn bg bsm" onclick="resetTimer()">↺ Reset</button>
+    </div>
+    <div style="margin-bottom:.7rem">
+      <p class="lbl" style="margin-bottom:.28rem">Working on</p>
+      <select id="tTaskSel" style="max-width:300px;margin:0 auto">
+        <option value="">— Select a task —</option>
+      </select>
+    </div>
+    <div class="stats" style="max-width:280px;margin:0 auto">
+      <div class="stat"><span class="stn" id="fSess">0</span><div class="stl">Sessions</div></div>
+      <div class="stat"><span class="stn" id="fMins">0</span><div class="stl">Mins</div></div>
+      <div class="stat"><span class="stn" id="fBest">0</span><div class="stl">Best Streak</div></div>
+    </div>
+  </div>
+  <div class="card al-sage">
+    <h3>🌱 Focus Insights</h3>
+    <div id="timerIns" class="ai-txt">Complete a session to get focus insights from Sage.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE 7 — SMART PLANNER
+══════════════════════════════════ -->
+<div id="page7" class="pg">
+  <div class="card">
+    <h1>Smart Planner 🗓</h1>
+    <p class="sub">Your routine + goals + schedule in one place.</p>
+    <div class="row">
+      <button class="btn bg bsm" onclick="openDlg('schedDlg');renderSchedForm()">✏️ Edit Schedule</button>
+      <button class="btn bp bsm" onclick="aiGeneratePlan()">🤖 AI Generate My Day Plan</button>
+    </div>
+    <div id="schedView"></div>
+  </div>
+
+  <!-- Goals Tracker -->
+  <div class="card al-lav">
+    <h3>🎯 Goals Tracker</h3>
+    <p class="sub">Track your bigger goals alongside your daily tasks.</p>
+    <div style="display:flex;gap:.5rem;margin-bottom:.8rem">
+      <input id="goalIn" placeholder="e.g. Finish semester project" style="margin:0">
+      <button class="btn bp bsm" onclick="addGoal()" style="white-space:nowrap">Add Goal</button>
+    </div>
+    <div id="goalsList"></div>
+  </div>
+
+  <!-- AI Day Plan Output -->
+  <div class="card al-amber" id="dayPlanCard" style="display:none">
+    <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.7rem">
+      <span>🤖</span><strong>Sage's Day Plan for You</strong>
+    </div>
+    <div id="dayPlanTxt" class="ai-txt"></div>
+  </div>
+</div>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -10,6 +10,7 @@
 
 </head>
 
+  <link rel="manifest" href="manifest.json">
 <body>
 
 <!-- ══ LOGIN ══ -->
@@ -99,6 +100,8 @@
     <div class="row">
       <button class="btn bp" onclick="saveSettings()">Save</button>
       <button class="btn bg" onclick="exportData()">📤 Export</button>
+      <label for="importFile" class="btn bg" style="cursor:pointer; display:inline-flex; align-items:center;">📥 Import</label>
+  <input type="file" id="importFile" accept=".json" onchange="importData(event)" style="display:none;">
       <button class="btn br" onclick="clearAll()">Delete All</button>
     </div>
     <button class="btn bg bfull" style="margin-top:.4rem" onclick="closeDlg('settingsDlg')">Close</button>
